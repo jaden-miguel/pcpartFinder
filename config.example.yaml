@@ -1,0 +1,33 @@
+# Copy to config.yaml and edit. Do not commit secrets.
+
+scan_interval_minutes: 30
+# Min hours between alerts at the same price (still alerts if price drops further)
+default_alert_cooldown_hours: 12
+auto_start_scanner: false
+
+# Apprise URLs — see https://github.com/caronc/apprise/wiki
+# Examples:
+#   discord://webhook_id/webhook_token
+#   tgram://bot-token/chat-id
+#   mailto://user:pass@smtp.gmail.com?to=you@gmail.com
+apprise_urls:
+  - "discord://WEBHOOK_ID/WEBHOOK_TOKEN"
+
+http:
+  timeout_seconds: 25
+  user_agent: "pcFinderDealBot/1.0 (personal use)"
+  # Set false only if you hit SSL errors in restricted networks
+  verify_ssl: true
+
+# Each watch: product URL + CSS selector for the element that contains the price.
+# Use your browser DevTools (Inspect) to find a stable selector for the current price.
+watches: []
+# Example (replace with a real product URL and selector):
+# watches:
+#   - id: "gpu-xyz"
+#     name: "GPU model name"
+#     url: "https://www.newegg.com/..."
+#     price_selector: ".price-current"
+#     max_price: 449.99
+#     min_drop_percent: 5
+#     currency: "USD"

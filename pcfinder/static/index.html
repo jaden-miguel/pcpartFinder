@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>pcFinder — PC part deals</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/app.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <div class="brand">
+          <h1>pcFinder</h1>
+          <p>
+            Each card is a <strong>specific deal</strong> (title + link). We merge
+            <a href="https://www.reddit.com/r/buildapcsales/hot/" target="_blank" rel="noopener">r/buildapcsales</a>
+            with Slickdeals’ front-page RSS so you still get real listings if Reddit blocks this network. Verify price and
+            retailer on the destination page.
+          </p>
+        </div>
+      </header>
+
+      <div class="card curated-hero" style="margin-bottom: 1.25rem">
+        <div class="row spread" style="align-items: flex-start">
+          <div>
+            <h2>Best deals right now</h2>
+            <p class="sub" style="margin-bottom: 0">
+              <strong>Open deal</strong> opens the listing (retailer or Reddit/Slickdeals thread). Reddit rows also show
+              <strong>Thread</strong> for comments. Click a <strong>product image</strong> for a full-size HD preview (Esc
+              or Close to exit).
+            </p>
+          </div>
+          <div class="row">
+            <button type="button" class="btn btn-primary" id="btn-refresh-curated">Refresh</button>
+          </div>
+        </div>
+        <p class="curated-meta" id="curated-meta" aria-live="polite">Loading deals…</p>
+        <div id="curated-grid" class="curated-grid"></div>
+        <p class="hint" style="margin-top: 1rem; margin-bottom: 0">
+          Reddit may rate-limit or block some networks. If this stays empty, try again in a minute or open the subreddit directly.
+        </p>
+      </div>
+
+      <details class="optional-block">
+        <summary>Custom price alerts &amp; settings <span class="optional-hint">(optional)</span></summary>
+        <div class="optional-inner">
+          <div class="grid grid-2" style="margin-bottom: 1.25rem">
+            <div class="card">
+              <h2>Scanner</h2>
+              <p class="sub">Runs on your PC while this page’s server is up.</p>
+              <div id="pill-scan" class="pill" style="margin-bottom: 0.75rem">
+                <span class="pill-dot" aria-hidden="true"></span>
+                <span id="pill-text">…</span>
+              </div>
+              <div class="field">
+                <label for="scan_interval_minutes">Check every (minutes)</label>
+                <input id="scan_interval_minutes" type="number" min="1" max="1440" value="30" />
+              </div>
+              <div class="field">
+                <label for="default_alert_cooldown_hours">Alert cooldown (hours, same price)</label>
+                <input id="default_alert_cooldown_hours" type="number" min="0" step="0.5" value="12" />
+              </div>
+              <label class="chk">
+                <input id="auto_start_scanner" type="checkbox" />
+                Auto-start scanner when you open the web app
+              </label>
+              <p class="hint">Bind to <strong>127.0.0.1</strong> only unless you know what you’re doing.</p>
+              <div class="row" style="margin-top: 1rem">
+                <button type="button" class="btn btn-primary" id="btn-start-scan">Start scanner</button>
+                <button type="button" class="btn btn-ghost" id="btn-stop-scan">Stop</button>
+                <button type="button" class="btn btn-ghost" id="btn-scan-once">Scan once</button>
+              </div>
+              <p class="status-line" style="margin-top: 1rem">
+                Last scan: <span id="last-scan">—</span>
+              </p>
+              <p class="status-line" id="last-err" style="color: var(--danger)"></p>
+            </div>
+
+            <div class="card">
+              <h2>Telegram</h2>
+              <p class="sub">
+                <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a> bot token + your chat id.
+                <a href="https://core.telegram.org/bots/api#getupdates" target="_blank" rel="noopener">getUpdates</a>
+              </p>
+              <div class="field">
+                <label for="telegram_bot_token">Bot token</label>
+                <input id="telegram_bot_token" type="password" autocomplete="off" placeholder="123456789:AAH…" />
+              </div>
+              <div class="field">
+                <label for="telegram_chat_id">Chat ID</label>
+                <input id="telegram_chat_id" type="text" placeholder="-100… or your user id" />
+              </div>
+              <div class="row">
+                <button type="button" class="btn btn-primary" id="btn-test-tg">Send test message</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card deals-board" style="margin-bottom: 1.25rem">
+            <h2>Your tracked prices</h2>
+            <p class="sub deals-intro">
+              After <strong>Save</strong> and <strong>Scan once</strong>, your own product URLs show here.
+              <span class="badge badge-deal" style="font-size: 0.65rem; vertical-align: middle">Deal</span> = matched your rules.
+            </p>
+            <p class="deals-status" id="deals-meta" aria-live="polite">—</p>
+            <div id="deals-highlight" class="deals-highlight"></div>
+            <h3 class="deals-subtitle" id="deals-table-heading" hidden>All watches</h3>
+            <div class="table-wrap">
+              <table class="deals-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Why</th>
+                  </tr>
+                </thead>
+                <tbody id="deals-all-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 1.25rem">
+            <h2>Find product links</h2>
+            <p class="sub" style="margin-bottom: 0.5rem">Browse, then paste URLs into watches below.</p>
+            <nav class="link-grid" aria-label="Browse PC parts">
+              <a class="link-chip" href="https://pcpartpicker.com/" target="_blank" rel="noopener">PCPartPicker</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/video-card/" target="_blank" rel="noopener">GPUs</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/cpu/" target="_blank" rel="noopener">CPUs</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/motherboard/" target="_blank" rel="noopener">Motherboards</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/memory/" target="_blank" rel="noopener">RAM</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/internal-hard-drive/" target="_blank" rel="noopener">Storage</a>
+              <a class="link-chip" href="https://pcpartpicker.com/products/power-supply/" target="_blank" rel="noopener">PSUs</a>
+              <a class="link-chip" href="https://www.newegg.com/Computer-Hardware/Category/ID-33" target="_blank" rel="noopener">Newegg</a>
+              <a class="link-chip" href="https://www.bhphotovideo.com/c/buy/PC-Components/N/3665021002" target="_blank" rel="noopener">B&amp;H</a>
+            </nav>
+            <div class="selector-copy">
+              <strong>PCPartPicker:</strong> <code id="pcpp-sel">#prices td.td__finalPrice</code>
+              <button type="button" class="btn btn-ghost" id="btn-copy-pcpp-sel" style="margin-left: 0.5rem; padding: 0.25rem 0.6rem; font-size: 0.8rem">Copy</button>
+            </div>
+            <div class="row" style="margin-top: 1rem">
+              <button type="button" class="btn btn-primary" id="btn-add-demo-watches">Add demo watch</button>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 1.25rem">
+            <div class="row spread">
+              <div>
+                <h2>Watches</h2>
+                <p class="sub" style="margin-bottom: 0">URL + CSS selector per product.</p>
+              </div>
+              <button type="button" class="btn btn-ghost" id="btn-add-watch">+ Add watch</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>URL</th>
+                    <th>Price selector</th>
+                    <th>Max price</th>
+                    <th>Min drop %</th>
+                    <th>Cur</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="watch-body"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom: 1.25rem">
+            <h2>Advanced</h2>
+            <p class="sub">Extra Apprise URLs — one per line.</p>
+            <div class="field">
+              <textarea id="extra_apprise_urls" placeholder="discord://id/token"></textarea>
+            </div>
+            <details class="adv">
+              <summary>HTTP client</summary>
+              <div class="field inline">
+                <div>
+                  <label for="http_timeout">Timeout (seconds)</label>
+                  <input id="http_timeout" type="number" min="5" step="1" value="25" />
+                </div>
+                <div>
+                  <label class="chk" style="margin-top: 1.4rem">
+                    <input id="http_verify_ssl" type="checkbox" checked />
+                    Verify SSL
+                  </label>
+                </div>
+              </div>
+              <div class="field">
+                <label for="http_ua">User-Agent</label>
+                <input id="http_ua" type="text" />
+              </div>
+            </details>
+          </div>
+
+          <div class="row">
+            <button type="button" class="btn btn-primary" id="btn-save">Save all</button>
+            <button type="button" class="btn btn-ghost" id="btn-reload">Reload</button>
+          </div>
+        </div>
+      </details>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
