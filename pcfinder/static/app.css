@@ -114,6 +114,76 @@ a {
   opacity: 0.95;
 }
 
+.curated-card--expired {
+  opacity: 0.55;
+}
+
+/* ── Image overlays (badges on photo) ── */
+.curated-img-overlays {
+  position: absolute;
+  top: 0.55rem;
+  left: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.badge--hot {
+  background: rgba(255, 80, 30, 0.88);
+  color: #fff;
+}
+
+.badge--expired {
+  background: rgba(120, 120, 120, 0.82);
+  color: #fff;
+}
+
+/* Category pill colors */
+.badge--cat { background: rgba(30, 30, 60, 0.78); color: #fff; }
+.badge--cat-gpu        { background: rgba(0, 180, 90, 0.85);  color: #fff; }
+.badge--cat-cpu        { background: rgba(37, 120, 230, 0.88); color: #fff; }
+.badge--cat-ram        { background: rgba(150, 60, 220, 0.85); color: #fff; }
+.badge--cat-ssd        { background: rgba(220, 130, 0, 0.88);  color: #fff; }
+.badge--cat-hdd        { background: rgba(160, 90, 30, 0.88);  color: #fff; }
+.badge--cat-motherboard{ background: rgba(180, 40, 100, 0.88); color: #fff; }
+.badge--cat-psu        { background: rgba(60, 160, 160, 0.88); color: #fff; }
+.badge--cat-cooler     { background: rgba(0, 160, 200, 0.88);  color: #fff; }
+.badge--cat-case       { background: rgba(80, 80, 80, 0.82);   color: #fff; }
+.badge--cat-monitor    { background: rgba(0, 140, 160, 0.88);  color: #fff; }
+.badge--cat-laptop     { background: rgba(50, 100, 200, 0.88); color: #fff; }
+.badge--cat-prebuilt   { background: rgba(180, 60, 0, 0.88);   color: #fff; }
+.badge--cat-peripheral { background: rgba(100, 80, 180, 0.85); color: #fff; }
+.badge--cat-networking { background: rgba(0, 130, 80, 0.88);   color: #fff; }
+.badge--cat-storage    { background: rgba(200, 100, 0, 0.88);  color: #fff; }
+.badge--cat-mini-pc    { background: rgba(60, 60, 160, 0.88);  color: #fff; }
+
+/* ── Price badge in meta row ── */
+.curated-price {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #27c76f;
+  letter-spacing: -0.01em;
+  padding: 0.1rem 0.4rem;
+  background: rgba(39, 199, 111, 0.12);
+  border-radius: 4px;
+  border: 1px solid rgba(39, 199, 111, 0.25);
+}
+
 .curated-media {
   position: relative;
   display: block;

@@ -315,7 +315,11 @@ function openCuratedImagePreview(imageUrl, title) {
 
 function curatedCard(it, index = 0) {
   const el = document.createElement("article");
-  el.className = "curated-card" + (it.is_bookmark ? " curated-card--bookmark" : "");
+  const expired = it.is_expired && !it.is_bookmark;
+  el.className = "curated-card"
+    + (it.is_bookmark ? " curated-card--bookmark" : "")
+    + (expired ? " curated-card--expired" : "");
+
   const thumbUrl = it.thumbnail && String(it.thumbnail).trim();
   if (thumbUrl) {
     const wrap = document.createElement("button");
@@ -343,6 +347,30 @@ function curatedCard(it, index = 0) {
         "Preview failed to load — use Open deal to see the product on the retailer or Reddit thread.";
       wrap.replaceWith(ph);
     });
+
+    // Overlay badges on the image
+    const overlays = document.createElement("div");
+    overlays.className = "curated-img-overlays";
+    if (!it.is_bookmark && !expired && it.score >= 200) {
+      const hot = document.createElement("span");
+      hot.className = "badge badge--hot";
+      hot.textContent = "🔥 Hot";
+      overlays.appendChild(hot);
+    }
+    if (expired) {
+      const expBadge = document.createElement("span");
+      expBadge.className = "badge badge--expired";
+      expBadge.textContent = "Expired";
+      overlays.appendChild(expBadge);
+    }
+    if (it.category && !it.is_bookmark) {
+      const cat = document.createElement("span");
+      cat.className = `badge badge--cat badge--cat-${it.category.toLowerCase().replace(/\s+/g, "-")}`;
+      cat.textContent = it.category;
+      overlays.appendChild(cat);
+    }
+    if (overlays.children.length) wrap.appendChild(overlays);
+
     wrap.appendChild(img);
     el.appendChild(wrap);
   } else {
@@ -353,13 +381,18 @@ function curatedCard(it, index = 0) {
       : "No preview image — open the deal to see photos on the store or thread.";
     el.appendChild(ph);
   }
+
   const inner = document.createElement("div");
   inner.className = "curated-card-inner";
+
   const title = document.createElement("h3");
   title.className = "curated-title";
   title.textContent = it.title || "—";
+
   const row = document.createElement("div");
   row.className = "curated-meta-row";
+
+  // Score
   const score = document.createElement("span");
   score.className = "curated-score";
   if (it.is_bookmark) {
@@ -370,12 +403,28 @@ function curatedCard(it, index = 0) {
     score.textContent = `▲ ${it.score ?? 0}`;
   }
   row.appendChild(score);
-  if (it.flair) {
+
+  // Price badge
+  if (it.price && !it.is_bookmark) {
+    const priceBadge = document.createElement("span");
+    priceBadge.className = "curated-price";
+    priceBadge.textContent = `$${it.price.toLocaleString("en-US", { minimumFractionDigits: it.price % 1 === 0 ? 0 : 2, maximumFractionDigits: 2 })}`;
+    row.appendChild(priceBadge);
+  }
+
+  // Source flair (only show if no category badge on image, or for bookmarks)
+  if (it.flair && (it.is_bookmark || !it.category)) {
     const f = document.createElement("span");
     f.className = "curated-flair";
     f.textContent = it.flair;
     row.appendChild(f);
+  } else if (it.source === "slickdeals" && !it.category) {
+    const f = document.createElement("span");
+    f.className = "curated-flair";
+    f.textContent = "Slickdeals";
+    row.appendChild(f);
   }
+
   const actions = document.createElement("div");
   actions.className = "curated-actions";
   const dealHref = it.deal_url || it.reddit_url || "#";

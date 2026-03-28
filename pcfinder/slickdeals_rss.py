@@ -15,11 +15,15 @@ logger = logging.getLogger(__name__)
 
 SLICKDEALS_RSS_URLS: tuple[str, ...] = (
     "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&rss=1",
-    "https://slickdeals.net/newsearch.php?searcharea=deals&search=GPU&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=GPU+graphics+card&rss=1",
     "https://slickdeals.net/newsearch.php?searcharea=deals&search=CPU+processor&rss=1",
-    "https://slickdeals.net/newsearch.php?searcharea=deals&search=SSD+NVMe&rss=1",
-    "https://slickdeals.net/newsearch.php?searcharea=deals&search=gaming+monitor&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=SSD+NVMe+storage&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=RAM+DDR5+DDR4&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=gaming+monitor+display&rss=1",
     "https://slickdeals.net/newsearch.php?searcharea=deals&search=gaming+laptop&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=motherboard+mobo&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=power+supply+PSU&rss=1",
+    "https://slickdeals.net/newsearch.php?searcharea=deals&search=CPU+cooler+AIO&rss=1",
 )
 
 UA = (

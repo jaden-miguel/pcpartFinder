@@ -204,6 +204,9 @@ def _normalize_atom_feed(xml_text: str) -> list[dict[str, Any]]:
                 "created_utc": _atom_published_ts(entry),
                 "thumbnail": thumb,
                 "is_self_post": is_self,
+                "is_expired": bool(_EXPIRED_FLAIR.search(flair or "")),
+                "category": _detect_category(title),
+                "price": _extract_title_price(title),
             }
         )
     return out
@@ -269,6 +272,10 @@ def _normalize_posts(payload: dict[str, Any]) -> list[dict[str, Any]]:
 
         pid = d.get("name") or d.get("id") or reddit_url
 
+        is_expired = bool(_EXPIRED_FLAIR.search(flair or ""))
+        category = _detect_category(title)
+        price = _extract_title_price(title)
+
         out.append(
             {
                 "id": pid,
@@ -280,6 +287,9 @@ def _normalize_posts(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "created_utc": created,
                 "thumbnail": thumb,
                 "is_self_post": is_self,
+                "is_expired": is_expired,
+                "category": category,
+                "price": price,
             }
         )
     return out
@@ -299,6 +309,55 @@ _PC_HINT = re.compile(
     r"usb-?c.*power bank|gan charger|wall charger)\b",
     re.I,
 )
+
+_EXPIRED_FLAIR = re.compile(r"expir|sold\s*out|oos\b|out\s*of\s*stock", re.I)
+
+# Category detection — ordered by priority (first match wins)
+_CAT_RULES: list[tuple[str, re.Pattern[str]]] = [
+    ("GPU",        re.compile(r"\b(gpu|graphics\s*card|video\s*card|geforce|rtx\s*\d|gtx\s*\d|rx\s*\d{3,4}|radeon|arc\s+[ab]\d)\b", re.I)),
+    ("CPU",        re.compile(r"\b(cpu|processor|ryzen|threadripper|intel\s+core|core\s+ultra|i[3579][-\s]\d{3,5}|xeon|athlon)\b", re.I)),
+    ("RAM",        re.compile(r"\b(ram|ddr[345]|so-?dimm|dimm|memory\s+kit|memory\s+\d+gb)\b", re.I)),
+    ("SSD",        re.compile(r"\b(ssd|nvme|m\.2|solid.state)\b", re.I)),
+    ("HDD",        re.compile(r"\b(hdd|hard\s*drive|mechanical\s*drive|\d+tb\s*drive)\b", re.I)),
+    ("Motherboard",re.compile(r"\b(motherboard|mobo|[bxzh]\d{3}m?|am[45]|lga\s*1[67]\d{2})\b", re.I)),
+    ("PSU",        re.compile(r"\b(psu|power\s*supply|\d{3,4}\s*w(?:att)?\s*(psu|modular|gold|platinum)|80\s*plus|atx\s*\d)\b", re.I)),
+    ("Cooler",     re.compile(r"\b(cpu\s*cooler|aio|liquid\s*cool|air\s*cooler|heatsink|thermal\s*paste|noctua|be\s*quiet|arctic\s+freezer|thermalright|deepcool)\b", re.I)),
+    ("Case",       re.compile(r"\b(pc\s*case|mid.tower|full.tower|mini.itx|micro.atx|atx\s*case|chassis)\b", re.I)),
+    ("Monitor",    re.compile(r"\b(monitor|display|\d{2,3}hz|oled\s*monitor|qd.oled|miniled|1440p|4k\s*uhd|ultrawide|ips\s*panel)\b", re.I)),
+    ("Laptop",     re.compile(r"\b(laptop|gaming\s*laptop|macbook|thinkpad|notebook|chromebook)\b", re.I)),
+    ("Prebuilt",   re.compile(r"\b(prebuilt|gaming\s*pc|gaming\s*desktop|ibuypower|cyberpowerpc|alienware)\b", re.I)),
+    ("Peripheral", re.compile(r"\b(keyboard|mechanical\s*keyboard|gaming\s*mouse|mouse\b|headset|webcam|controller|gamepad)\b", re.I)),
+    ("Networking", re.compile(r"\b(router|mesh\s*wifi|wifi\s*[67]|nas\b|ethernet|switch\b)\b", re.I)),
+    ("Storage",    re.compile(r"\b(flash\s*drive|external\s*(ssd|hdd|drive)|microsd|usb\s*drive|thumb\s*drive)\b", re.I)),
+    ("Mini PC",    re.compile(r"\b(mini\s*pc|nuc\b|small\s*form\s*factor)\b", re.I)),
+]
+
+_PRICE_IN_TITLE = re.compile(
+    r"\$\s*(\d[\d,]*(?:\.\d{1,2})?)"   # $249.99 or $249
+    r"|(\d[\d,]*(?:\.\d{1,2})?)\s*USD", # 249.99 USD
+    re.I,
+)
+
+
+def _detect_category(title: str) -> str | None:
+    for cat, pat in _CAT_RULES:
+        if pat.search(title):
+            return cat
+    return None
+
+
+def _extract_title_price(title: str) -> float | None:
+    """Extract first USD price from a deal title string."""
+    prices: list[float] = []
+    for m in _PRICE_IN_TITLE.finditer(title):
+        raw = (m.group(1) or m.group(2) or "").replace(",", "")
+        try:
+            v = float(raw)
+            if 1 <= v <= 50000:
+                prices.append(v)
+        except ValueError:
+            pass
+    return prices[0] if prices else None
 
 
 async def _fetch_reddit_hot_json() -> tuple[list[dict[str, Any]], str | None]:
@@ -435,7 +494,9 @@ async def fetch_curated_deals() -> tuple[list[dict[str, Any]], str | None]:
 
     for it in r_items:
         it["source"] = "reddit"
-        it["_sort"] = int(it.get("score") or 0) + 4000
+        score = int(it.get("score") or 0)
+        expired_penalty = -8000 if it.get("is_expired") else 0
+        it["_sort"] = score + 4000 + expired_penalty
 
     # Enrich Reddit items that lack good thumbnails (external-preview.redd.it is blocked
     # server-side; we replace them with OG images from the actual product pages)
@@ -443,6 +504,9 @@ async def fetch_curated_deals() -> tuple[list[dict[str, Any]], str | None]:
 
     for it in sd_items:
         it["source"] = "slickdeals"
+        it.setdefault("is_expired", False)
+        it.setdefault("category", _detect_category(it.get("title", "")))
+        it.setdefault("price", _extract_title_price(it.get("title", "")))
         base = int(it.get("score") or 0)
         if _PC_HINT.search(it.get("title", "")):
             base += 2800
