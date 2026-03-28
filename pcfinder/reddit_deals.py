@@ -192,11 +192,13 @@ def _normalize_atom_feed(xml_text: str) -> list[dict[str, Any]]:
 
         flair_m = re.match(r"^\s*(\[[^\]]+\])", title)
         flair = flair_m.group(1) if flair_m else None
+        _asin_atom = extract_amazon_asin(deal_href)
 
         out.append(
             {
                 "id": pid,
-                "title": title,
+                "title": _clean_title(title),
+                "title_raw": title,
                 "deal_url": deal_href,
                 "reddit_url": thread_url,
                 "score": 0,
@@ -207,6 +209,8 @@ def _normalize_atom_feed(xml_text: str) -> list[dict[str, Any]]:
                 "is_expired": bool(_EXPIRED_FLAIR.search(flair or "")),
                 "category": _detect_category(title),
                 "price": _extract_title_price(title),
+                "discount_pct": _extract_discount_pct(title),
+                "camel_url": _camel_url(_asin_atom) if _asin_atom else None,
             }
         )
     return out
@@ -275,11 +279,16 @@ def _normalize_posts(payload: dict[str, Any]) -> list[dict[str, Any]]:
         is_expired = bool(_EXPIRED_FLAIR.search(flair or ""))
         category = _detect_category(title)
         price = _extract_title_price(title)
+        discount_pct = _extract_discount_pct(title)
+        clean = _clean_title(title)
+        asin = extract_amazon_asin(ext_url) if ext_url else None
+        camel_url = _camel_url(asin) if asin else None
 
         out.append(
             {
                 "id": pid,
-                "title": title,
+                "title": clean,
+                "title_raw": title,
                 "deal_url": deal_href,
                 "reddit_url": reddit_url,
                 "score": score,
@@ -290,6 +299,8 @@ def _normalize_posts(payload: dict[str, Any]) -> list[dict[str, Any]]:
                 "is_expired": is_expired,
                 "category": category,
                 "price": price,
+                "discount_pct": discount_pct,
+                "camel_url": camel_url,
             }
         )
     return out
@@ -311,6 +322,20 @@ _PC_HINT = re.compile(
 )
 
 _EXPIRED_FLAIR = re.compile(r"expir|sold\s*out|oos\b|out\s*of\s*stock", re.I)
+_BRACKET_PREFIX = re.compile(r"^\s*(\[[^\]]{1,30}\]\s*)+")  # strips [GPU], [CPU] etc.
+_DISCOUNT_PCT = re.compile(
+    r"(\d{1,3})\s*%\s*off"           # "30% off"
+    r"|save\s+(\d{1,3})\s*%"         # "save 30%"
+    r"|(\d{1,3})\s*%\s*discount",    # "30% discount"
+    re.I,
+)
+_PRICE_PAIR = re.compile(
+    # Only match explicit "was/reg/orig $X" then "$Y" or "now $Y"
+    r"(?:was|reg(?:ular)?|orig(?:inal)?|msrp|list|retails?)\s+\$\s*(\d[\d,]*(?:\.\d{1,2})?)"
+    r"[^$]{1,40}"
+    r"(?:now\s+)?\$\s*(\d[\d,]*(?:\.\d{1,2})?)",
+    re.I,
+)
 
 # Category detection — ordered by priority (first match wins)
 _CAT_RULES: list[tuple[str, re.Pattern[str]]] = [
@@ -358,6 +383,42 @@ def _extract_title_price(title: str) -> float | None:
         except ValueError:
             pass
     return prices[0] if prices else None
+
+
+def _extract_discount_pct(title: str) -> int | None:
+    """Return discount % if explicitly mentioned, or compute from two prices."""
+    m = _DISCOUNT_PCT.search(title)
+    if m:
+        raw = m.group(1) or m.group(2) or m.group(3)
+        try:
+            v = int(raw)
+            if 1 <= v <= 99:
+                return v
+        except ValueError:
+            pass
+    # Try to compute from two prices: $X ... $Y (sale is the smaller one)
+    m2 = _PRICE_PAIR.search(title)
+    if m2:
+        try:
+            a = float(m2.group(1).replace(",", ""))
+            b = float(m2.group(2).replace(",", ""))
+            original, sale = (a, b) if a > b else (b, a)
+            if original > 0 and sale > 0 and sale < original:
+                pct = round(100 * (original - sale) / original)
+                if 5 <= pct <= 95:
+                    return pct
+        except (ValueError, ZeroDivisionError):
+            pass
+    return None
+
+
+def _clean_title(title: str) -> str:
+    """Remove leading [FLAIR] bracket tags — we show those as category badges."""
+    return _BRACKET_PREFIX.sub("", title).strip()
+
+
+def _camel_url(asin: str) -> str:
+    return f"https://camelcamelcamel.com/product/{asin}"
 
 
 async def _fetch_reddit_hot_json() -> tuple[list[dict[str, Any]], str | None]:
@@ -507,6 +568,9 @@ async def fetch_curated_deals() -> tuple[list[dict[str, Any]], str | None]:
         it.setdefault("is_expired", False)
         it.setdefault("category", _detect_category(it.get("title", "")))
         it.setdefault("price", _extract_title_price(it.get("title", "")))
+        it.setdefault("discount_pct", _extract_discount_pct(it.get("title", "")))
+        it.setdefault("camel_url", None)
+        it.setdefault("title_raw", it.get("title", ""))
         base = int(it.get("score") or 0)
         if _PC_HINT.search(it.get("title", "")):
             base += 2800

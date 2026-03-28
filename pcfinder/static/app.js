@@ -412,6 +412,31 @@ function curatedCard(it, index = 0) {
     row.appendChild(priceBadge);
   }
 
+  // Discount % badge
+  if (it.discount_pct && !it.is_bookmark) {
+    const disc = document.createElement("span");
+    disc.className = "badge-discount";
+    disc.textContent = `−${it.discount_pct}%`;
+    row.appendChild(disc);
+  }
+
+  // Deal age + NEW badge
+  if (it.created_utc && !it.is_bookmark) {
+    const age = dealAge(it.created_utc);
+    if (age) {
+      const ageBadge = document.createElement("span");
+      const ageHours = (Date.now() / 1000 - it.created_utc) / 3600;
+      if (ageHours < 4) {
+        ageBadge.className = "badge-age badge-age--new";
+        ageBadge.textContent = "NEW · " + age;
+      } else {
+        ageBadge.className = "badge-age";
+        ageBadge.textContent = age;
+      }
+      row.appendChild(ageBadge);
+    }
+  }
+
   // Source flair (only show if no category badge on image, or for bookmarks)
   if (it.flair && (it.is_bookmark || !it.category)) {
     const f = document.createElement("span");
@@ -444,9 +469,54 @@ function curatedCard(it, index = 0) {
     aThread.textContent = "Thread";
     actions.append(aThread);
   }
+  if (it.camel_url) {
+    const aCamel = document.createElement("a");
+    aCamel.href = it.camel_url;
+    aCamel.target = "_blank";
+    aCamel.rel = "noopener noreferrer";
+    aCamel.className = "btn btn-ghost btn-compact btn-camel";
+    aCamel.title = "Price history on CamelCamelCamel";
+    aCamel.textContent = "📈 History";
+    actions.append(aCamel);
+  }
   inner.append(title, row, actions);
   el.appendChild(inner);
   return el;
+}
+
+// ── Deal age helper ───────────────────────────────────────────────────────────
+function dealAge(created_utc) {
+  if (!created_utc) return null;
+  const diffSec = Math.floor(Date.now() / 1000) - created_utc;
+  if (diffSec < 0) return null;
+  const h = Math.floor(diffSec / 3600);
+  if (h < 1) return `${Math.max(1, Math.floor(diffSec / 60))}m ago`;
+  if (h < 24) return `${h}h ago`;
+  const d = Math.floor(h / 24);
+  return `${d}d ago`;
+}
+
+// ── State for filter/sort ─────────────────────────────────────────────────────
+let _curatedFilter = "All";
+let _curatedSort   = "top";   // top | new | price
+let _curatedData   = null;
+
+function applyFilterSort(items) {
+  let out = [...items];
+  if (_curatedFilter !== "All") {
+    out = out.filter(it => it.category === _curatedFilter);
+  }
+  if (_curatedSort === "new") {
+    out.sort((a, b) => (b.created_utc || 0) - (a.created_utc || 0));
+  } else if (_curatedSort === "price") {
+    const priced = out.filter(it => it.price != null);
+    const rest   = out.filter(it => it.price == null);
+    priced.sort((a, b) => a.price - b.price);
+    out = [...priced, ...rest];
+  }
+  // Always push expired to back
+  out.sort((a, b) => (a.is_expired ? 1 : 0) - (b.is_expired ? 1 : 0));
+  return out;
 }
 
 function renderCurated(d) {
@@ -458,7 +528,8 @@ function renderCurated(d) {
     grid.innerHTML = "";
     return;
   }
-  const items = Array.isArray(d.items) ? d.items : [];
+  _curatedData = d;
+  const allItems = Array.isArray(d.items) ? d.items : [];
   const when = d.updated_at ? new Date(d.updated_at).toLocaleString() : "";
   if (d.bookmark_mode) {
     const re = d.reddit_error ? String(d.reddit_error) : "";
@@ -466,11 +537,85 @@ function renderCurated(d) {
       (re ? `Could not load live deal feeds (${re.slice(0, 140)}). ` : "") +
       "Showing quick links — open each in your browser for current deals.";
   } else {
-    const parts = [`${items.length} product deals (Reddit + Slickdeals)`];
+    const active = allItems.filter(it => !it.is_expired).length;
+    const parts = [`${active} active deals (${allItems.length} total)`];
     if (when) parts.push(`Updated ${when}`);
     meta.textContent = parts.join(" · ");
   }
+
+  // Build/update filter + sort controls
+  let controls = $("#curated-controls");
+  if (!controls) {
+    controls = document.createElement("div");
+    controls.id = "curated-controls";
+    controls.className = "curated-controls";
+    grid.parentElement.insertBefore(controls, grid);
+  }
+  controls.innerHTML = "";
+
+  // Category filter pills
+  const cats = ["All", ...new Set(allItems.map(it => it.category).filter(Boolean))].sort(
+    (a, b) => a === "All" ? -1 : b === "All" ? 1 : a.localeCompare(b)
+  );
+  const filterGroup = document.createElement("div");
+  filterGroup.className = "filter-pills";
+  cats.forEach(cat => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "filter-pill" + (cat === _curatedFilter ? " filter-pill--active" : "");
+    const count = cat === "All" ? allItems.length : allItems.filter(it => it.category === cat).length;
+    btn.textContent = `${cat} (${count})`;
+    btn.addEventListener("click", () => {
+      _curatedFilter = cat;
+      _reRenderGrid();
+    });
+    filterGroup.appendChild(btn);
+  });
+  controls.appendChild(filterGroup);
+
+  // Sort tabs
+  const sortGroup = document.createElement("div");
+  sortGroup.className = "sort-tabs";
+  [["top", "▲ Top"], ["new", "🕐 New"], ["price", "$ Price"]].forEach(([val, label]) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "sort-tab" + (val === _curatedSort ? " sort-tab--active" : "");
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      _curatedSort = val;
+      _reRenderGrid();
+    });
+    sortGroup.appendChild(btn);
+  });
+  controls.appendChild(sortGroup);
+
+  _reRenderGrid();
+}
+
+function _reRenderGrid() {
+  const grid = $("#curated-grid");
+  if (!grid || !_curatedData) return;
+  const allItems = Array.isArray(_curatedData.items) ? _curatedData.items : [];
+  const items = applyFilterSort(allItems);
+
+  // Rebuild filter pill active states
+  document.querySelectorAll(".filter-pill").forEach(btn => {
+    const cat = btn.textContent.replace(/\s*\(\d+\)$/, "");
+    btn.className = "filter-pill" + (cat === _curatedFilter ? " filter-pill--active" : "");
+  });
+  document.querySelectorAll(".sort-tab").forEach(btn => {
+    const val = btn.textContent.includes("Top") ? "top" : btn.textContent.includes("New") ? "new" : "price";
+    btn.className = "sort-tab" + (val === _curatedSort ? " sort-tab--active" : "");
+  });
+
   grid.innerHTML = "";
+  if (!items.length) {
+    const empty = document.createElement("p");
+    empty.className = "curated-empty";
+    empty.textContent = `No ${_curatedFilter !== "All" ? _curatedFilter + " " : ""}deals found.`;
+    grid.appendChild(empty);
+    return;
+  }
   items.forEach((it, index) => {
     if (it && typeof it === "object") grid.appendChild(curatedCard(it, index));
   });
