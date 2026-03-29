@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="/static/app.css" />
@@ -18,32 +18,31 @@
         <div class="brand">
           <h1>pcFinder</h1>
           <p>
-            Each card is a <strong>specific deal</strong> (title + link). We merge
+            Live PC part deals from
             <a href="https://www.reddit.com/r/buildapcsales/hot/" target="_blank" rel="noopener">r/buildapcsales</a>
-            with Slickdeals’ front-page RSS so you still get real listings if Reddit blocks this network. Verify price and
-            retailer on the destination page.
+            + Slickdeals. Click any image to zoom. Verify price on the destination page.
           </p>
         </div>
       </header>
 
-      <div class="card curated-hero" style="margin-bottom: 1.25rem">
-        <div class="row spread" style="align-items: flex-start">
+      <div class="card curated-hero" style="margin-bottom: 1.5rem">
+        <div class="row spread" style="align-items: center">
           <div>
             <h2>Best deals right now</h2>
             <p class="sub" style="margin-bottom: 0">
-              <strong>Open deal</strong> opens the listing (retailer or Reddit/Slickdeals thread). Reddit rows also show
-              <strong>Thread</strong> for comments. Click a <strong>product image</strong> for a full-size HD preview (Esc
-              or Close to exit).
+              <strong>Open deal</strong> → retailer or thread.&nbsp;
+              <strong>Thread</strong> → Reddit comments.&nbsp;
+              Tap any image for HD preview.
             </p>
           </div>
           <div class="row">
-            <button type="button" class="btn btn-primary" id="btn-refresh-curated">Refresh</button>
+            <button type="button" class="btn btn-primary" id="btn-refresh-curated">↺ Refresh</button>
           </div>
         </div>
         <p class="curated-meta" id="curated-meta" aria-live="polite">Loading deals…</p>
         <div id="curated-grid" class="curated-grid"></div>
         <p class="hint" style="margin-top: 1rem; margin-bottom: 0">
-          Reddit may rate-limit or block some networks. If this stays empty, try again in a minute or open the subreddit directly.
+          Reddit may rate-limit on some networks. If empty, try refreshing or visit the subreddit directly.
         </p>
       </div>
 
@@ -53,7 +52,7 @@
           <div class="grid grid-2" style="margin-bottom: 1.25rem">
             <div class="card">
               <h2>Scanner</h2>
-              <p class="sub">Runs on your PC while this page’s server is up.</p>
+              <p class="sub">Runs on your PC while this page's server is up.</p>
               <div id="pill-scan" class="pill" style="margin-bottom: 0.75rem">
                 <span class="pill-dot" aria-hidden="true"></span>
                 <span id="pill-text">…</span>
@@ -70,7 +69,7 @@
                 <input id="auto_start_scanner" type="checkbox" />
                 Auto-start scanner when you open the web app
               </label>
-              <p class="hint">Bind to <strong>127.0.0.1</strong> only unless you know what you’re doing.</p>
+              <p class="hint">Bind to <strong>127.0.0.1</strong> only unless you know what you're doing.</p>
               <div class="row" style="margin-top: 1rem">
                 <button type="button" class="btn btn-primary" id="btn-start-scan">Start scanner</button>
                 <button type="button" class="btn btn-ghost" id="btn-stop-scan">Stop</button>
@@ -142,7 +141,7 @@
             </nav>
             <div class="selector-copy">
               <strong>PCPartPicker:</strong> <code id="pcpp-sel">#prices td.td__finalPrice</code>
-              <button type="button" class="btn btn-ghost" id="btn-copy-pcpp-sel" style="margin-left: 0.5rem; padding: 0.25rem 0.6rem; font-size: 0.8rem">Copy</button>
+              <button type="button" class="btn btn-ghost" id="btn-copy-pcpp-sel" style="margin-left: 0.5rem; padding: 0.25rem 0.6rem; font-size: 0.78rem">Copy</button>
             </div>
             <div class="row" style="margin-top: 1rem">
               <button type="button" class="btn btn-primary" id="btn-add-demo-watches">Add demo watch</button>

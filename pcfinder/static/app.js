@@ -1,5 +1,73 @@
 const $ = (sel, el = document) => el.querySelector(sel);
 
+// ─── Category placeholder SVG art ────────────────────────────────────────────
+const _CAT_SVG = {
+  gpu: `<svg viewBox="0 0 160 90" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="28" width="148" height="48" rx="4"/><circle cx="48" cy="52" r="17"/><circle cx="48" cy="52" r="6"/><circle cx="104" cy="52" r="17"/><circle cx="104" cy="52" r="6"/><rect x="6" y="18" width="148" height="13" rx="2"/><rect x="14" y="76" width="52" height="7" rx="1"/><rect x="118" y="15" width="22" height="8" rx="1"/></svg>`,
+
+  cpu: `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="22" y="22" width="56" height="56" rx="3"/><rect x="30" y="30" width="40" height="40" rx="2"/><line x1="34" y1="22" x2="34" y2="12"/><line x1="44" y1="22" x2="44" y2="12"/><line x1="56" y1="22" x2="56" y2="12"/><line x1="66" y1="22" x2="66" y2="12"/><line x1="34" y1="78" x2="34" y2="88"/><line x1="44" y1="78" x2="44" y2="88"/><line x1="56" y1="78" x2="56" y2="88"/><line x1="66" y1="78" x2="66" y2="88"/><line x1="22" y1="34" x2="12" y2="34"/><line x1="22" y1="44" x2="12" y2="44"/><line x1="22" y1="56" x2="12" y2="56"/><line x1="22" y1="66" x2="12" y2="66"/><line x1="78" y1="34" x2="88" y2="34"/><line x1="78" y1="44" x2="88" y2="44"/><line x1="78" y1="56" x2="88" y2="56"/><line x1="78" y1="66" x2="88" y2="66"/></svg>`,
+
+  ram: `<svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="14" width="56" height="88" rx="2"/><line x1="12" y1="96" x2="68" y2="96"/><rect x="20" y="24" width="8" height="10" rx="1"/><rect x="36" y="24" width="8" height="10" rx="1"/><rect x="52" y="24" width="8" height="10" rx="1"/><rect x="20" y="42" width="8" height="10" rx="1"/><rect x="36" y="42" width="8" height="10" rx="1"/><rect x="52" y="42" width="8" height="10" rx="1"/><rect x="20" y="60" width="8" height="10" rx="1"/><rect x="36" y="60" width="8" height="10" rx="1"/><rect x="52" y="60" width="8" height="10" rx="1"/><line x1="20" y1="102" x2="20" y2="112"/><line x1="30" y1="102" x2="30" y2="112"/><line x1="40" y1="102" x2="40" y2="112"/><line x1="50" y1="102" x2="50" y2="112"/><line x1="60" y1="102" x2="60" y2="112"/></svg>`,
+
+  ssd: `<svg viewBox="0 0 160 80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="22" width="144" height="40" rx="5"/><rect x="18" y="30" width="32" height="22" rx="2"/><circle cx="75" cy="41" r="11"/><circle cx="75" cy="41" r="4"/><rect x="98" y="32" width="38" height="10" rx="1"/><rect x="98" y="48" width="26" height="6" rx="1"/><line x1="14" y1="62" x2="14" y2="72"/><line x1="22" y1="62" x2="22" y2="72"/><line x1="30" y1="62" x2="30" y2="72"/><line x1="38" y1="62" x2="38" y2="72"/><line x1="46" y1="62" x2="46" y2="72"/></svg>`,
+
+  monitor: `<svg viewBox="0 0 160 110" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="8" width="140" height="78" rx="6"/><rect x="18" y="16" width="124" height="62" rx="2"/><line x1="80" y1="86" x2="80" y2="100"/><rect x="52" y="100" width="56" height="7" rx="3"/></svg>`,
+
+  mouse: `<svg viewBox="0 0 80 120" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M40 10 C16 10 10 38 10 65 C10 92 22 110 40 110 C58 110 70 92 70 65 C70 38 64 10 40 10Z"/><line x1="40" y1="10" x2="40" y2="56"/><rect x="31" y="32" width="18" height="24" rx="9"/><line x1="40" y1="32" x2="40" y2="56"/></svg>`,
+
+  keyboard: `<svg viewBox="0 0 160 80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="15" width="144" height="52" rx="6"/><rect x="18" y="25" width="10" height="10" rx="1"/><rect x="33" y="25" width="10" height="10" rx="1"/><rect x="48" y="25" width="10" height="10" rx="1"/><rect x="63" y="25" width="10" height="10" rx="1"/><rect x="78" y="25" width="10" height="10" rx="1"/><rect x="93" y="25" width="10" height="10" rx="1"/><rect x="108" y="25" width="10" height="10" rx="1"/><rect x="123" y="25" width="14" height="10" rx="1"/><rect x="18" y="41" width="14" height="10" rx="1"/><rect x="37" y="41" width="10" height="10" rx="1"/><rect x="52" y="41" width="10" height="10" rx="1"/><rect x="67" y="41" width="10" height="10" rx="1"/><rect x="82" y="41" width="10" height="10" rx="1"/><rect x="97" y="41" width="10" height="10" rx="1"/><rect x="112" y="41" width="10" height="10" rx="1"/><rect x="127" y="41" width="16" height="10" rx="1"/><rect x="30" y="55" width="100" height="8" rx="1"/></svg>`,
+
+  laptop: `<svg viewBox="0 0 160 110" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="20" y="10" width="120" height="76" rx="4"/><rect x="28" y="18" width="104" height="60" rx="2"/><rect x="5" y="86" width="150" height="12" rx="3"/><rect x="58" y="86" width="44" height="4" rx="2"/></svg>`,
+
+  cooler: `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40"/><circle cx="50" cy="50" r="12"/><path d="M50 10 C62 30 72 38 50 50" stroke-linecap="round"/><path d="M90 50 C70 62 62 72 50 50" stroke-linecap="round"/><path d="M50 90 C38 70 28 62 50 50" stroke-linecap="round"/><path d="M10 50 C30 38 38 28 50 50" stroke-linecap="round"/></svg>`,
+
+  psu: `<svg viewBox="0 0 130 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="114" height="72" rx="5"/><circle cx="42" cy="48" r="20"/><circle cx="42" cy="48" r="7"/><rect x="72" y="26" width="36" height="12" rx="2"/><rect x="72" y="46" width="36" height="12" rx="2"/><line x1="80" y1="84" x2="75" y2="97"/><line x1="88" y1="84" x2="88" y2="97"/><line x1="96" y1="84" x2="101" y2="97"/></svg>`,
+
+  motherboard: `<svg viewBox="0 0 130 130" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="8" width="114" height="114" rx="3"/><rect x="18" y="18" width="40" height="40" rx="2"/><rect x="66" y="18" width="46" height="13" rx="1"/><rect x="66" y="36" width="46" height="13" rx="1"/><rect x="66" y="54" width="46" height="13" rx="1"/><rect x="18" y="66" width="40" height="15" rx="2"/><rect x="18" y="90" width="94" height="10" rx="1"/><circle cx="112" cy="112" r="6"/><circle cx="18" cy="112" r="6"/></svg>`,
+
+  headset: `<svg viewBox="0 0 120 110" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M20 62 C20 28 100 28 100 62"/><rect x="8" y="58" width="22" height="30" rx="8"/><rect x="90" y="58" width="22" height="30" rx="8"/><line x1="90" y1="100" x2="90" y2="110"/><line x1="78" y1="110" x2="102" y2="110"/></svg>`,
+
+  controller: `<svg viewBox="0 0 160 90" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><path d="M32 46 C20 20 10 18 8 34 C5 54 15 70 36 70 C52 68 62 55 80 55 C98 55 108 68 124 70 C145 70 155 54 152 34 C150 18 140 20 128 46 Z"/><line x1="48" y1="36" x2="48" y2="52"/><line x1="40" y1="44" x2="56" y2="44"/><circle cx="112" cy="36" r="4"/><circle cx="122" cy="45" r="4"/><circle cx="102" cy="45" r="4"/><circle cx="112" cy="54" r="4"/><rect x="68" y="36" width="10" height="9" rx="1"/><rect x="82" y="36" width="10" height="9" rx="1"/></svg>`,
+
+  network: `<svg viewBox="0 0 130 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="54" width="102" height="32" rx="5"/><circle cx="30" cy="70" r="4" fill="currentColor" stroke="none"/><circle cx="46" cy="70" r="4" fill="currentColor" stroke="none"/><circle cx="62" cy="70" r="4" fill="currentColor" stroke="none"/><line x1="65" y1="54" x2="65" y2="30"/><path d="M49 36 C49 24 81 24 81 36"/><path d="M37 42 C37 16 93 16 93 42"/></svg>`,
+
+  case: `<svg viewBox="0 0 80 130" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="8" width="56" height="116" rx="4"/><circle cx="40" cy="34" r="12"/><circle cx="40" cy="34" r="4"/><rect x="20" y="56" width="18" height="10" rx="2"/><rect x="20" y="72" width="18" height="10" rx="2"/><rect x="20" y="88" width="18" height="10" rx="2"/><line x1="62" y1="56" x2="62" y2="106"/></svg>`,
+
+  hdd: `<svg viewBox="0 0 140 80" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="12" width="124" height="56" rx="5"/><circle cx="88" cy="40" r="22"/><circle cx="88" cy="40" r="8"/><circle cx="88" cy="20" r="3"/><rect x="18" y="26" width="38" height="8" rx="1"/><rect x="18" y="40" width="38" height="8" rx="1"/></svg>`,
+
+  default: `<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><rect x="15" y="15" width="70" height="70" rx="4"/><rect x="28" y="28" width="44" height="44" rx="2"/><line x1="28" y1="15" x2="28" y2="8"/><line x1="50" y1="15" x2="50" y2="8"/><line x1="72" y1="15" x2="72" y2="8"/><line x1="28" y1="85" x2="28" y2="92"/><line x1="50" y1="85" x2="50" y2="92"/><line x1="72" y1="85" x2="72" y2="92"/><line x1="15" y1="28" x2="8" y2="28"/><line x1="15" y1="50" x2="8" y2="50"/><line x1="15" y1="72" x2="8" y2="72"/><line x1="85" y1="28" x2="92" y2="28"/><line x1="85" y1="50" x2="92" y2="50"/><line x1="85" y1="72" x2="92" y2="72"/></svg>`,
+};
+
+function _categoryToKey(category) {
+  const c = (category || "").toLowerCase();
+  if (c.includes("gpu") || c.includes("graphic")) return "gpu";
+  if (c.includes("cpu") || c.includes("processor")) return "cpu";
+  if (c.includes("ram") || c.includes("memory")) return "ram";
+  if (c.includes("ssd") || c.includes("nvme") || c.includes("storage")) return "ssd";
+  if (c.includes("hdd") || c.includes("hard drive")) return "hdd";
+  if (c.includes("monitor") || c.includes("display")) return "monitor";
+  if (c.includes("mouse")) return "mouse";
+  if (c.includes("keyboard")) return "keyboard";
+  if (c.includes("laptop") || c.includes("notebook")) return "laptop";
+  if (c.includes("cooler") || c.includes("cooling") || c.includes("aio") || c.includes("fan")) return "cooler";
+  if (c.includes("psu") || c.includes("power supply")) return "psu";
+  if (c.includes("motherboard") || c.includes("mobo")) return "motherboard";
+  if (c.includes("headset") || c.includes("headphone") || c.includes("audio")) return "headset";
+  if (c.includes("controller") || c.includes("gamepad")) return "controller";
+  if (c.includes("network") || c.includes("wifi") || c.includes("router")) return "network";
+  if (c.includes("case") || c.includes("chassis")) return "case";
+  return "default";
+}
+
+function categoryPlaceholderEl(category) {
+  const key = _categoryToKey(category);
+  const svg = _CAT_SVG[key] || _CAT_SVG.default;
+  const div = document.createElement("div");
+  div.className = "curated-thumb-placeholder curated-thumb-placeholder--art";
+  div.innerHTML = svg + `<span class="placeholder-cat-label">${category || "No preview available"}</span>`;
+  return div;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 /** Skip re-rendering deals/curated on poll when nothing changed (avoids DOM wipe + image flash). */
 let _digestCurated = "";
 let _digestDeals = "";
@@ -341,11 +409,7 @@ function curatedCard(it, index = 0) {
     img.decoding = "async";
     if (index < 4) img.fetchPriority = "high";
     img.addEventListener("error", () => {
-      const ph = document.createElement("div");
-      ph.className = "curated-thumb-placeholder";
-      ph.textContent =
-        "Preview failed to load — use Open deal to see the product on the retailer or Reddit thread.";
-      wrap.replaceWith(ph);
+      wrap.replaceWith(categoryPlaceholderEl(it.category));
     });
 
     // Overlay badges on the image
@@ -374,12 +438,7 @@ function curatedCard(it, index = 0) {
     wrap.appendChild(img);
     el.appendChild(wrap);
   } else {
-    const ph = document.createElement("div");
-    ph.className = "curated-thumb-placeholder";
-    ph.textContent = it.is_bookmark
-      ? "No thumbnail for this shortcut — open the link below."
-      : "No preview image — open the deal to see photos on the store or thread.";
-    el.appendChild(ph);
+    el.appendChild(categoryPlaceholderEl(it.category));
   }
 
   const inner = document.createElement("div");
@@ -791,7 +850,35 @@ async function pollStatus() {
 }
 
 function init() {
-  $("#btn-refresh-curated")?.addEventListener("click", () =>
+  $("#btn-refresh-curated")?.addEventListener("click", () => {
+    const btn = $("#btn-refresh-curated");
+    const grid = $("#curated-grid");
+
+    // Show loading state immediately
+    btn.disabled = true;
+    btn.textContent = "Refreshing…";
+
+    // Overlay grid with skeleton loader
+    if (grid) {
+      grid.innerHTML = "";
+      const loader = document.createElement("div");
+      loader.id = "curated-refresh-loader";
+      loader.style.cssText =
+        "grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;gap:1rem;color:var(--text-muted,#888)";
+      loader.innerHTML =
+        '<div style="font-size:2rem;animation:spin 1s linear infinite">⟳</div>' +
+        "<p style=\"margin:0;font-size:0.95rem\">Fetching fresh deals… this takes ~15 s</p>";
+      grid.appendChild(loader);
+
+      // Add spin keyframe if not already present
+      if (!document.getElementById("spin-style")) {
+        const style = document.createElement("style");
+        style.id = "spin-style";
+        style.textContent = "@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}";
+        document.head.appendChild(style);
+      }
+    }
+
     api("/api/config?refresh_curated=1")
       .then((d) => {
         const cd = d.curated_deals || {
@@ -811,10 +898,21 @@ function init() {
         };
         _digestDeals = digestDeals(feed);
         renderDeals(feed);
-        toast("Deals refreshed");
+        toast("Deals refreshed ✓");
       })
-      .catch((e) => toast(e.message, false)),
-  );
+      .catch((e) => {
+        toast(e.message, false);
+        // Restore grid on error
+        if (grid && grid.innerHTML.includes("curated-refresh-loader")) {
+          grid.innerHTML = "";
+          _reRenderGrid();
+        }
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.textContent = "Refresh";
+      });
+  });
   $("#btn-save")?.addEventListener("click", () => saveConfig().catch((e) => toast(e.message, false)));
   $("#btn-reload")?.addEventListener("click", () => loadConfig().catch((e) => toast(e.message, false)));
   $("#btn-add-watch")?.addEventListener("click", () => {
